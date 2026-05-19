@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://LekytelegalhubNigeria.github.io/Lekyte-Legal-Hub/sitemap.xml
