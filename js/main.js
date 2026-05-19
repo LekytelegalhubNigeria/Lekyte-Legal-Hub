@@ -73,7 +73,7 @@ const backToTop = document.getElementById("backToTop");
 
 window.addEventListener("scroll", () => {
   if (!backToTop) return;
-  backToTop.style.display = window.scrollY > 300 ? "block" : "none";
+  backToTop.style.display = window.scrollY > 300? "block" : "none";
 });
 
 if (backToTop) {
@@ -142,15 +142,14 @@ async function loadProperties() {
 
   try {
     const { data, error } = await supabaseClient
-      .from("properties")
-      .select("*")
-      .eq("status", "verified")
-      .order("created_at", { ascending: false });
+     .from("properties")
+     .select("*")
+     .eq("status", "verified")
+     .order("created_at", { ascending: false });
 
     if (error) throw error;
 
     if (!data || data.length === 0) {
-      // Show sample advert when no properties exist
       grid.innerHTML = renderPropertyCard(sampleProperty);
       return;
     }
@@ -158,7 +157,6 @@ async function loadProperties() {
     grid.innerHTML = data.map(renderPropertyCard).join("");
   } catch (error) {
     console.error("Error loading properties:", error);
-    // Show sample even if DB fails
     grid.innerHTML = renderPropertyCard(sampleProperty);
   }
 }
@@ -170,17 +168,17 @@ const sampleProperty = {
   id: "sample-001",
   title: "3 Plots of Land with Uncompleted Building - Akure, Ondo State",
   description: "3 plots of land with an uncompleted building. Verified by Lekyte Legal Hub team. Good for completion or investment.",
-  price: 150000000,  // 150,000,000.00 naira
+  price: 150000,
   location: "Akure, Ondo State",
   type: "land",
   bedrooms: 0,
   bathrooms: 0,
-  size: 3600,  // approximate for 3 plots, adjust if you know the exact sqm
+  size: 3600,
   whatsapp: WA_PHONE_NUMBER,
   status: "verified",
   images: [
     "images/property1.jpg",
-    "images/property2.jpg", 
+    "images/property2.jpg",
     "images/property3.jpg",
     "images/property4.jpg"
   ],
@@ -203,8 +201,8 @@ window.filterProperties = async function () {
 
   try {
     let query = supabaseClient.from("properties").select("*").eq("status", "verified");
-    if (type && type !== "all") query = query.eq("type", type);
-    if (location && location !== "all") query = query.ilike("location", `%${location}%`);
+    if (type && type!== "all") query = query.eq("type", type);
+    if (location && location!== "all") query = query.ilike("location", `%${location}%`);
 
     const { data, error } = await query.order("created_at", { ascending: false });
     if (error) throw error;
@@ -243,7 +241,7 @@ function renderPropertyCard(property) {
   `).join('');
 
   return `
-    <div class="property-card">
+    <div class="property-card" id="property-${property.id}">
       <div class="property-card-header">
         <img src="images/agent1.jpg" alt="Agent" loading="lazy">
         <div class="meta">
@@ -309,13 +307,14 @@ window.changePropertyImage = function(thumb) {
 }
 
 // ===============================
-// SHARE PROPERTY (FIXED)
+// SHARE PROPERTY (FIXED FOR GITHUB PAGES)
 // ===============================
 
 window.shareProperty = function (id = "") {
+  const baseUrl = window.location.origin + window.location.pathname;
   const url = id
-    ? `${window.location.origin}/properties?id=${id}`
-    : window.location.href;
+   ? `${baseUrl}#properties?id=${id}`
+    : baseUrl + '#properties';
 
   const text = "Check this verified property on Lekyte Legal Hub";
 
@@ -323,10 +322,11 @@ window.shareProperty = function (id = "") {
     navigator.share({
       title: text,
       url: url,
-    });
+    }).catch(() => {});
   } else {
     window.open(
-      `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`
+      `https://wa.me/?text=${encodeURIComponent(text + " + url)}`,
+      '_blank'
     );
   }
 };
@@ -358,12 +358,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     if (supabaseClient) {
       const { data } = await supabaseClient.auth.getSession();
-      console.log("Supabase Ready", data?.session ? "Logged in" : "Guest");
+      console.log("Supabase Ready", data?.session? "Logged in" : "Guest");
     }
   } catch (error) {
     console.error("Init error:", error);
   }
 });
+
+// ===============================
+// HANDLE DIRECT LINKS WITH HASH
+// ===============================
+
+window.addEventListener('load', () => {
+  const hash = window.location.hash;
+  if (hash.startsWith('#properties?id=')) {
+    const id = hash.split('id=')[1];
+    showPage('properties');
+
+    setTimeout(() => {
+      const el = document.getElementById('property-' + id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 1500);
+  }
+});
+
 // ===============================
 // AUTH: SIGNUP / LOGIN / LOGIN CHECK
 // ===============================
@@ -371,13 +389,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 // Signup Handler
 window.handleSignUp = async function (e) {
   e.preventDefault();
-  
+
   const form = e.target;
   const email = form.email.value.trim();
   const password = form.password.value.trim();
   const statusEl = document.getElementById('authMessage');
 
-  if (!email || !password) {
+  if (!email ||!password) {
     if (statusEl) {
       statusEl.textContent = 'Please fill all fields';
       statusEl.style.color = 'red';
@@ -407,8 +425,6 @@ window.handleSignUp = async function (e) {
     }
 
     form.reset();
-
-    // Only redirect after 2 seconds so user sees the message
     setTimeout(() => showPage('login'), 2000);
 
   } catch (error) {
@@ -423,13 +439,13 @@ window.handleSignUp = async function (e) {
 // Login Handler
 window.handleLogin = async function (e) {
   e.preventDefault();
-  
+
   const form = e.target;
   const email = form.email.value.trim();
   const password = form.password.value.trim();
   const statusEl = document.getElementById('authMessage');
 
-  if (!email || !password) {
+  if (!email ||!password) {
     if (statusEl) {
       statusEl.textContent = 'Please fill all fields';
       statusEl.style.color = 'red';
@@ -450,7 +466,7 @@ window.handleLogin = async function (e) {
       statusEl.style.color = 'green';
     }
 
-    showPage('agentDashboard'); // change to your dashboard page ID
+    showPage('agentDashboard');
 
   } catch (error) {
     console.error('Login error:', error);
